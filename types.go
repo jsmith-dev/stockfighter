@@ -66,7 +66,7 @@ type OrderStatus struct {
 	OriginalQuantity uint64          `json:"originalQty"`
 	Quantity         uint64          `json:"qty"`
 	Price            uint64          `json:"price"`
-	OrderType        string          `json:"type"`
+	OrderType        string          `json:"orderType"`
 	OrderID          int64           `json:"id"`
 	Account          string          `json:"account"`
 	Timestamp        time.Time       `json:"ts"`
