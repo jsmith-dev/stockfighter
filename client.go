@@ -400,7 +400,15 @@ func (api *APIClient) GetAllStockAllOrdersStatus(venue, account string) ([]Order
 		panic(fmt.Errorf("Invalid account name: %v", account))
 	}
 
-	resp, err := api.httpClient.Get(apiBaseURL + "/venues/" + venue + "/accounts/" + account + "/orders")
+	req, err := http.NewRequest("GET", apiBaseURL+"/venues/"+venue+"/accounts/"+account+"/orders", nil)
+	req.Header = map[string][]string{
+		"X-Starfighter-Authorization": {api.apiKey},
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := api.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -441,7 +449,15 @@ func (api *APIClient) GetStockAllOrdersStatus(venue, account, stock string) ([]O
 		panic(fmt.Errorf("Invalid stock symbol: %v", stock))
 	}
 
-	resp, err := api.httpClient.Get(apiBaseURL + "/venues/" + venue + "/accounts/" + account + "/stocks/" + stock + "/orders")
+	req, err := http.NewRequest("GET", apiBaseURL+"/venues/"+venue+"/accounts/"+account+"/stocks/"+stock+"/orders", nil)
+	req.Header = map[string][]string{
+		"X-Starfighter-Authorization": {api.apiKey},
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := api.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
