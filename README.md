@@ -15,21 +15,27 @@ package main
 
 import "gpk.io/stockfighter.v0"
 
-func main() {
-  client := stockfighter.NewClient(*apiKey)
+const (
+	apiKey = "your_stockfighter_api_key"
+	venue = "ABCD"
+	stock = "XYZ"
+)
 
-	orderbook, err := client.GetOrderbook(*venueSymbol, *stockSymbol)
+func main() {
+	client := stockfighter.NewClient(apiKey)
+
+	orderbook, err := client.GetOrderbook(venue, stock)
 	if err != nil {
 		panic(err)
 	}
 	
 	// ... 
-
-	quote, err := client.GetQuote(*venueSymbol, *stockSymbol)
+	
+	quote, err := client.GetQuote(venue, stock)
 	if err != nil {
 		panic(err)
 	}
-
+	
 	// ...
 }
 ```
