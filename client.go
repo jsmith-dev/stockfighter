@@ -11,20 +11,30 @@ import (
 
 const apiBaseURL = "https://api.stockfighter.io/ob/api"
 
-type APIClient struct {
+// Client represents a client object you can use Stockfighter APIs.
+//
+// You can create a new Client using NewClient function.
+type Client struct {
 	apiKey     string
 	httpClient http.Client
 }
 
-func NewAPIClient(apiKey string) *APIClient {
-	var api = APIClient{apiKey: apiKey}
+// NewClient creates a new Client using your API key. This never returns nil.
+func NewClient(apiKey string) *Client {
+	var api = Client{apiKey: apiKey}
 
 	api.httpClient = http.Client{}
 
 	return &api
 }
 
-func (api *APIClient) Ping() error {
+// Ping checks if the API is up.
+//
+// Ping returns nil if API is running fine. Otherwise it will return an error.
+//
+// Stockfighter API:
+//     GET https://api.stockfighter.io/ob/api/heartbeat
+func (api *Client) Ping() error {
 	resp, err := api.httpClient.Get(apiBaseURL + "/heartbeat")
 	if err != nil {
 		return err
@@ -45,7 +55,13 @@ func (api *APIClient) Ping() error {
 	return nil
 }
 
-func (api *APIClient) PingVenue(venue string) error {
+// PingVenue checks if a venue is up.
+//
+// PingVenue returns nil if the venue is up. Otherwise it will return an error.
+//
+// Stockfighter API:
+//     GET https://api.stockfighter.io/ob/api/venues/:venue/heartbeat
+func (api *Client) PingVenue(venue string) error {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -78,7 +94,11 @@ func (api *APIClient) PingVenue(venue string) error {
 	return nil
 }
 
-func (api *APIClient) ListStocks(venue string) ([]StockInfo, error) {
+// ListStocks lists the stocks available for trading on a venue.
+//
+// Stockfighter API:
+//     GET https://api.stockfighter.io/ob/api/venues/:venue/stocks
+func (api *Client) ListStocks(venue string) ([]StockInfo, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -111,7 +131,11 @@ func (api *APIClient) ListStocks(venue string) ([]StockInfo, error) {
 	return respData.Stocks, nil
 }
 
-func (api *APIClient) GetStockOrderbook(venue, stock string) (*Orderbook, error) {
+// GetOrderbook returns the orderbook for a particular stock.
+//
+// Stockfighter API:
+//     GET https://api.stockfighter.io/ob/api/venues/:venue/stocks/:stock
+func (api *Client) GetOrderbook(venue, stock string) (*Orderbook, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -153,7 +177,11 @@ func (api *APIClient) GetStockOrderbook(venue, stock string) (*Orderbook, error)
 	}, nil
 }
 
-func (api *APIClient) PlaceStockOrder(venue, stock, account string, price, quantity uint64, direction, orderType string) (*OrderStatus, error) {
+// PlaceOrder places an order for a stock.
+//
+// Stockfighter API:
+//     POST https://api.stockfighter.io/ob/api/venues/:venue/stocks/:stock/orders
+func (api *Client) PlaceOrder(venue, stock, account string, price, quantity uint64, direction, orderType string) (*OrderStatus, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -226,7 +254,11 @@ func (api *APIClient) PlaceStockOrder(venue, stock, account string, price, quant
 	}, nil
 }
 
-func (api *APIClient) GetStockQuote(venue, stock string) (*StockQuote, error) {
+// GetQuote returns a quick look at the most recent trade information for a stock.
+//
+// Stockfighter API:
+//     GET https://api.stockfighter.io/ob/api/venues/:venue/stocks/:stock/quote
+func (api *Client) GetQuote(venue, stock string) (*StockQuote, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -275,7 +307,11 @@ func (api *APIClient) GetStockQuote(venue, stock string) (*StockQuote, error) {
 	}, nil
 }
 
-func (api *APIClient) GetStockOrderStatus(venue, stock string, orderID int64) (*OrderStatus, error) {
+// GetOrder returns a status of an existing order.
+//
+// Stockfighter API:
+//     GET https://api.stockfighter.io/ob/api/venues/:venue/stocks/:stock/orders/:id
+func (api *Client) GetOrder(venue, stock string, orderID int64) (*OrderStatus, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -331,7 +367,11 @@ func (api *APIClient) GetStockOrderStatus(venue, stock string, orderID int64) (*
 	}, nil
 }
 
-func (api *APIClient) CancelStockOrder(venue, stock string, orderID int64) (*OrderStatus, error) {
+// CancelOrder cancels an order.
+//
+// Stockfighter API:
+//     DELETE https://api.stockfighter.io/ob/api/venues/:venue/stocks/:stock/orders/:order
+func (api *Client) CancelOrder(venue, stock string, orderID int64) (*OrderStatus, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -389,7 +429,11 @@ func (api *APIClient) CancelStockOrder(venue, stock string, orderID int64) (*Ord
 	}, nil
 }
 
-func (api *APIClient) GetAllStockAllOrdersStatus(venue, account string) ([]OrderStatus, error) {
+// GetAllOrders returns status of all stock orders in the venue.
+//
+// Stockfighter API:
+//     GET https://api.stockfighter.io/ob/api/venues/:venue/accounts/:account/orders
+func (api *Client) GetAllOrders(venue, account string) ([]OrderStatus, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -433,7 +477,11 @@ func (api *APIClient) GetAllStockAllOrdersStatus(venue, account string) ([]Order
 	return respData.Orders, nil
 }
 
-func (api *APIClient) GetStockAllOrdersStatus(venue, account, stock string) ([]OrderStatus, error) {
+// GetStockOrders returns status of all orders for a particular stock in the venue.
+//
+// Stockfighter API:
+//     GET https://api.stockfighter.io/ob/api/venues/:venue/accounts/:account/stocks/:stock/orders
+func (api *Client) GetStockOrders(venue, account, stock string) ([]OrderStatus, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
