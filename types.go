@@ -32,8 +32,8 @@ func (s StockInfo) String() string {
 	return fmt.Sprintf("%v (%v)", s.Symbol, s.Name)
 }
 
-// A StockQuote represents a stock quote.
-type StockQuote struct {
+// A Quote represents a stock quote.
+type Quote struct {
 	// Bid best price, size, and depth
 	BidPrice uint64 `json:"bid"`
 	BidSize  uint64 `json:"bidSize"`
@@ -88,7 +88,7 @@ type OrderFillInfo struct {
 }
 
 // An OrderStatus represents the status of an open or closed order.
-type OrderStatus struct {
+type Order struct {
 	Direction        string          `json:"direction"`
 	OriginalQuantity uint64          `json:"originalQty"`
 	Quantity         uint64          `json:"qty"`

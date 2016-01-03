@@ -32,7 +32,7 @@ type apiRespNewStockOrder struct {
 	OriginalQuantity uint64          `json:"originalQty"`
 	Quantity         uint64          `json:"qty"`
 	Price            uint64          `json:"price"`
-	OrderType        string          `json:"type"`
+	OrderType        string          `json:"orderType"`
 	OrderID          int64           `json:"id"`
 	Account          string          `json:"account"`
 	Timestamp        time.Time       `json:"ts"`
@@ -77,8 +77,8 @@ type apiRespStockOrderStatus struct {
 }
 
 type apiRespAllOrdersStatus struct {
-	OK          bool          `json:"ok"`
-	Error       string        `json:"error"`
-	VenueSymbol string        `json:"venue"`
-	Orders      []OrderStatus `json:"orders"`
+	OK          bool    `json:"ok"`
+	Error       string  `json:"error"`
+	VenueSymbol string  `json:"venue"`
+	Orders      []Order `json:"orders"`
 }

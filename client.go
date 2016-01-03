@@ -33,14 +33,15 @@ func (client *Client) getAPIJson(method, apiPath string, reqBody io.Reader, resp
 	if err != nil {
 		return 0, err
 	}
-	req.Header = map[string][]string{
-		"X-Starfighter-Authorization": {client.apiKey},
-		"Content-Type":                {"application/json"},
+
+	req.Header.Add("X-Starfighter-Authorization", client.apiKey)
+	if reqBody != nil {
+		req.Header.Add("Content-Type", "application/json")
 	}
 
 	resp, err := client.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	defer resp.Body.Close()
 
@@ -148,8 +149,8 @@ func (client *Client) GetOrderbook(venue, stock string) (*Orderbook, error) {
 		return nil, err
 	case status == 401: // unauthorized
 		return nil, &ErrorUnauthorized{}
-	case status == 404: // stock not found
-		return nil, &ErrorStockNotFound{VenueSymbol: venue, StockSymbol: stock}
+	case status == 404: // venue not found
+		return nil, &ErrorVenueNotFound{VenueSymbol: venue}
 	}
 
 	if !resp.OK {
@@ -167,7 +168,7 @@ func (client *Client) GetOrderbook(venue, stock string) (*Orderbook, error) {
 //
 // Stockfighter API:
 //     POST https://api.stockfighter.io/ob/api/venues/:venue/stocks/:stock/orders
-func (client *Client) PlaceOrder(venue, stock, account string, price, quantity uint64, direction, orderType string) (*OrderStatus, error) {
+func (client *Client) PlaceOrder(venue, stock, account string, price, quantity uint64, direction, orderType string) (*Order, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -208,7 +209,7 @@ func (client *Client) PlaceOrder(venue, stock, account string, price, quantity u
 		return nil, errors.New(resp.Error)
 	}
 
-	return &OrderStatus{
+	return &Order{
 		Direction:        resp.Direction,
 		OriginalQuantity: resp.OriginalQuantity,
 		Quantity:         resp.Quantity,
@@ -227,7 +228,7 @@ func (client *Client) PlaceOrder(venue, stock, account string, price, quantity u
 //
 // Stockfighter API:
 //     GET https://api.stockfighter.io/ob/api/venues/:venue/stocks/:stock/quote
-func (client *Client) GetQuote(venue, stock string) (*StockQuote, error) {
+func (client *Client) GetQuote(venue, stock string) (*Quote, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -245,7 +246,7 @@ func (client *Client) GetQuote(venue, stock string) (*StockQuote, error) {
 		return nil, err
 	case status == 401: // unauthorized
 		return nil, &ErrorUnauthorized{}
-	case status == 404: // stock not found
+	case status == 404: // venue or stock not found
 		return nil, &ErrorStockNotFound{VenueSymbol: venue, StockSymbol: stock}
 	}
 
@@ -253,7 +254,7 @@ func (client *Client) GetQuote(venue, stock string) (*StockQuote, error) {
 		return nil, errors.New(resp.Error)
 	}
 
-	return &StockQuote{
+	return &Quote{
 		BidPrice:      resp.BidPrice,
 		BidSize:       resp.BidSize,
 		BidDepth:      resp.BidDepth,
@@ -271,7 +272,7 @@ func (client *Client) GetQuote(venue, stock string) (*StockQuote, error) {
 //
 // Stockfighter API:
 //     GET https://api.stockfighter.io/ob/api/venues/:venue/stocks/:stock/orders/:id
-func (client *Client) GetOrder(venue, stock string, orderID int64) (*OrderStatus, error) {
+func (client *Client) GetOrder(venue, stock string, orderID int64) (*Order, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -289,13 +290,14 @@ func (client *Client) GetOrder(venue, stock string, orderID int64) (*OrderStatus
 		return nil, err
 	case status == 401: // unauthorized
 		return nil, &ErrorUnauthorized{}
+		//case status == 404: // venue, stock, or order ID not found
 	}
 
 	if !resp.OK {
 		return nil, errors.New(resp.Error)
 	}
 
-	return &OrderStatus{
+	return &Order{
 		Direction:        resp.Direction,
 		OriginalQuantity: resp.OriginalQuantity,
 		Quantity:         resp.Quantity,
@@ -314,7 +316,7 @@ func (client *Client) GetOrder(venue, stock string, orderID int64) (*OrderStatus
 //
 // Stockfighter API:
 //     DELETE https://api.stockfighter.io/ob/api/venues/:venue/stocks/:stock/orders/:order
-func (client *Client) CancelOrder(venue, stock string, orderID int64) (*OrderStatus, error) {
+func (client *Client) CancelOrder(venue, stock string, orderID int64) (*Order, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -340,7 +342,7 @@ func (client *Client) CancelOrder(venue, stock string, orderID int64) (*OrderSta
 		return nil, errors.New(resp.Error)
 	}
 
-	return &OrderStatus{
+	return &Order{
 		Direction:        resp.Direction,
 		OriginalQuantity: resp.OriginalQuantity,
 		Quantity:         resp.Quantity,
@@ -359,7 +361,7 @@ func (client *Client) CancelOrder(venue, stock string, orderID int64) (*OrderSta
 //
 // Stockfighter API:
 //     GET https://api.stockfighter.io/ob/api/venues/:venue/accounts/:account/orders
-func (client *Client) GetAllOrders(venue, account string) ([]OrderStatus, error) {
+func (client *Client) GetAllOrders(venue, account string) ([]Order, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -377,6 +379,8 @@ func (client *Client) GetAllOrders(venue, account string) ([]OrderStatus, error)
 		return nil, err
 	case status == 401: // unauthorized
 		return nil, &ErrorUnauthorized{}
+	case status == 404: // venue not found
+		return nil, &ErrorVenueNotFound{VenueSymbol: venue}
 	}
 
 	if !resp.OK {
@@ -390,7 +394,7 @@ func (client *Client) GetAllOrders(venue, account string) ([]OrderStatus, error)
 //
 // Stockfighter API:
 //     GET https://api.stockfighter.io/ob/api/venues/:venue/accounts/:account/stocks/:stock/orders
-func (client *Client) GetStockOrders(venue, account, stock string) ([]OrderStatus, error) {
+func (client *Client) GetStockOrders(venue, account, stock string) ([]Order, error) {
 	venue = strings.TrimSpace(venue)
 	if venue == "" {
 		panic(fmt.Errorf("Invalid venue symbol: %v", venue))
@@ -413,6 +417,8 @@ func (client *Client) GetStockOrders(venue, account, stock string) ([]OrderStatu
 		return nil, err
 	case status == 401: // unauthorized
 		return nil, &ErrorUnauthorized{}
+	case status == 404: // venue not found
+		return nil, &ErrorVenueNotFound{VenueSymbol: venue}
 	}
 
 	if !resp.OK {
