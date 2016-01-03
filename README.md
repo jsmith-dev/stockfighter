@@ -40,6 +40,14 @@ func main() {
 }
 ```
 
+## Tests
+
+To run unit tests, run:
+
+```bash
+API_KEY=your_stockfighter_api_key go test
+```
+
 ## References
 
 See [GoDoc](https://godoc.org/gpk.io/stockfighter).
